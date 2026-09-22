@@ -76,6 +76,7 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json',
+        'User-Agent': 'omdsh.com/1.0',
       },
       body: JSON.stringify({
         client_id: clientId,
@@ -106,6 +107,7 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
       headers: {
         Authorization: `Bearer ${accessToken}`,
         Accept: 'application/vnd.github+json',
+        'User-Agent': 'omdsh.com/1.0',
       },
     })
     console.error('GitHub userinfo status:', userRes.status)
@@ -130,6 +132,7 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
         headers: {
           Authorization: `Bearer ${accessToken}`,
           Accept: 'application/vnd.github+json',
+          'User-Agent': 'omdsh.com/1.0',
         },
       })
       if (emailRes.ok) {
