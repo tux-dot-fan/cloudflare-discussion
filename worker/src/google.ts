@@ -56,7 +56,7 @@ export async function handleGoogleCallback(request: Request, env: Env): Promise<
   const error = url.searchParams.get('error')
 
   if (error) {
-    return Response.redirect('/?error=google_denied', 302)
+    return Response.redirect('https://omdsh.com/?error=google_denied', 302)
   }
 
   if (!code) {
@@ -86,13 +86,13 @@ export async function handleGoogleCallback(request: Request, env: Env): Promise<
 
     if (!tokenRes.ok) {
       console.error('Google token exchange failed:', await tokenRes.text())
-      return Response.redirect('/?error=google_token_failed', 302)
+      return Response.redirect('https://omdsh.com/?error=google_token_failed', 302)
     }
     tokenData = await tokenRes.json() as { access_token: string }
   }
   catch (err) {
     console.error('Google token exchange error:', err)
-    return Response.redirect('/?error=google_token_failed', 302)
+    return Response.redirect('https://omdsh.com/?error=google_token_failed', 302)
   }
 
   // Get user info
@@ -103,13 +103,13 @@ export async function handleGoogleCallback(request: Request, env: Env): Promise<
     })
     if (!userInfoRes.ok) {
       console.error('Google userinfo failed:', await userInfoRes.text())
-      return Response.redirect('/?error=google_userinfo_failed', 302)
+      return Response.redirect('https://omdsh.com/?error=google_userinfo_failed', 302)
     }
     googleUser = await userInfoRes.json() as typeof googleUser
   }
   catch (err) {
     console.error('Google userinfo error:', err)
-    return Response.redirect('/?error=google_userinfo_failed', 302)
+    return Response.redirect('https://omdsh.com/?error=google_userinfo_failed', 302)
   }
 
   // Find user by google_id
@@ -140,7 +140,7 @@ export async function handleGoogleCallback(request: Request, env: Env): Promise<
   }
 
   if (!user) {
-    return Response.redirect('/?error=google_user_creation_failed', 302)
+    return Response.redirect('https://omdsh.com/?error=google_user_creation_failed', 302)
   }
 
   // Update last login
@@ -157,11 +157,14 @@ export async function handleGoogleCallback(request: Request, env: Env): Promise<
   const cookie = buildCookie(getTokenKey(env), token, 30 * 24 * 60 * 60 * 1000, env)
 
   // Determine return URL from state
-  let returnTo = '/'
+  let returnTo = 'https://omdsh.com/'
   if (state) {
     try {
       const decoded = JSON.parse(base64urlDecode(state))
-      if (decoded?.return) returnTo = decoded.return
+      if (decoded?.return) {
+        const ret = decoded.return
+        returnTo = ret.startsWith('http') ? ret : `https://omdsh.com${ret.startsWith('/') ? ret : '/' + ret}`
+      }
     }
     catch { /* ignore invalid state */ }
   }

@@ -53,7 +53,7 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
   const error = url.searchParams.get('error')
 
   if (error) {
-    return Response.redirect('/?error=github_denied', 302)
+    return Response.redirect('https://omdsh.com/?error=github_denied', 302)
   }
 
   if (!code) {
@@ -86,7 +86,7 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
     const tokenData = await tokenRes.json() as { access_token?: string; error?: string }
     if (!tokenData.access_token) {
       console.error('GitHub token exchange failed:', tokenData)
-      return Response.redirect('/?error=github_token_failed', 302)
+      return Response.redirect('https://omdsh.com/?error=github_token_failed', 302)
     }
     accessToken = tokenData.access_token
   }
@@ -106,13 +106,13 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
     })
     if (!userRes.ok) {
       console.error('GitHub userinfo failed:', await userRes.text())
-      return Response.redirect('/?error=github_userinfo_failed', 302)
+      return Response.redirect('https://omdsh.com/?error=github_userinfo_failed', 302)
     }
     githubUser = await userRes.json() as typeof githubUser
   }
   catch (err) {
     console.error('GitHub userinfo error:', err)
-    return Response.redirect('/?error=github_userinfo_failed', 302)
+    return Response.redirect('https://omdsh.com/?error=github_userinfo_failed', 302)
   }
 
   // Get primary email if not public
@@ -135,7 +135,7 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
   }
 
   if (!email) {
-    return Response.redirect('/?error=github_no_email', 302)
+    return Response.redirect('https://omdsh.com/?error=github_no_email', 302)
   }
 
   const githubId = String(githubUser.id)
@@ -168,7 +168,7 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
   }
 
   if (!user) {
-    return Response.redirect('/?error=github_user_creation_failed', 302)
+    return Response.redirect('https://omdsh.com/?error=github_user_creation_failed', 302)
   }
 
   // Update last login
@@ -185,11 +185,14 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
   const cookie = buildCookie(getTokenKey(env), token, 30 * 24 * 60 * 60 * 1000, env)
 
   // Determine return URL from state
-  let returnTo = '/'
+  let returnTo = 'https://omdsh.com/'
   if (state) {
     try {
       const decoded = JSON.parse(base64urlDecode(state))
-      if (decoded?.return) returnTo = decoded.return
+      if (decoded?.return) {
+        const ret = decoded.return
+        returnTo = ret.startsWith('http') ? ret : `https://omdsh.com${ret.startsWith('/') ? ret : '/' + ret}`
+      }
     }
     catch { /* ignore invalid state */ }
   }
