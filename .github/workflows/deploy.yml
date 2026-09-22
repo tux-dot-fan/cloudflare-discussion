@@ -38,4 +38,4 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --name cloudflare-discussion --assets .output/public --define "__APP_VERSION__=${{ env.APP_VERSION }}"
+          command: deploy --name cloudflare-discussion --assets .output/public --define "APP_VERSION:\"${{ env.APP_VERSION }}\""
