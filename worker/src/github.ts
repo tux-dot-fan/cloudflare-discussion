@@ -81,14 +81,14 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
       }),
     })
 
-    const tokenData = await tokenRes.json() as { access_token?: string; error?: string }
+    const tokenData = await tokenRes.json() as { access_token?: string; error?: string; error_description?: string }
     if (!tokenData.access_token) {
-      return Response.redirect('https://omdsh.com/?error=github_token_failed', 302)
+      return Response.redirect(`https://omdsh.com/?error=github_token_failed&detail=${encodeURIComponent((tokenData.error_description || tokenData.error || 'unknown') + ' [' + tokenRes.status + ']')}`, 302)
     }
     accessToken = tokenData.access_token
   }
-  catch {
-    return Response.redirect('https://omdsh.com/?error=github_token_failed', 302)
+  catch (e) {
+    return Response.redirect('https://omdsh.com/?error=github_token_failed&detail=network-error', 302)
   }
 
   let githubUser: { id: number; login: string; avatar_url: string; email: string | null }
@@ -105,8 +105,8 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
     }
     githubUser = await userRes.json() as typeof githubUser
   }
-  catch {
-    return Response.redirect('https://omdsh.com/?error=github_userinfo_failed', 302)
+  catch (e) {
+    return Response.redirect('https://omdsh.com/?error=github_userinfo_failed&detail=network-error', 302)
   }
 
   let email = githubUser.email
