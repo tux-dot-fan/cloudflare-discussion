@@ -21,6 +21,19 @@ useHead(computed(() => ({
     { name: 'keywords', content: sysConfig.value?.websiteKeywords || '' },
     { name: 'description', content: sysConfig.value?.websiteDescription || '' },
   ],
+  script: [
+    { src: 'https://www.googletagmanager.com/gtag/js?id=G-1WYTSD07C1', async: true, tagPosition: 'head' },
+    {
+      innerHTML: `
+window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-1WYTSD07C1');
+`,
+      tagPosition: 'head',
+      type: 'text/javascript',
+    },
+  ],
 })))
 </script>
 
