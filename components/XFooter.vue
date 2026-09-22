@@ -19,8 +19,8 @@ const currentYear = new Date().getFullYear()
         <!-- Right: contact info + QR -->
         <div class="flex items-center gap-4">
           <div class="text-xs text-gray-500 space-y-1 text-right">
-            <div>联系我们</div>
-            <div>扫码加入飞书群</div>
+            <div>dsh 交流群</div>
+            <div>扫码加入讨论</div>
           </div>
           <img
             src="https://omdsh.com/imgs/feishu-group-qr.jpg"
