@@ -47,28 +47,23 @@ export async function handleGitHubAuthStart(request: Request, env: Env): Promise
 }
 
 export async function handleGitHubCallback(request: Request, env: Env): Promise<Response> {
-  console.error('GitHub callback URL:', request.url)
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
   const state = url.searchParams.get('state')
   const error = url.searchParams.get('error')
-  console.error('GitHub callback code=', !!code, 'error=', error)
 
   if (error) {
     return Response.redirect('https://omdsh.com/?error=github_denied', 302)
   }
 
   if (!code) {
-    const headers = new Headers()
-    headers.set('Content-Type', 'application/json')
-    return json({ success: false, message: '缺少授权码' }, headers, 400)
+    return json({ success: false, message: '缺少授权码' }, new Headers(), 400)
   }
 
   const config = await getSysConfig(env)
   const clientId = config.githubClientId!
   const clientSecret = config.githubClientSecret!
 
-  // Exchange code for access token
   let accessToken: string
   try {
     const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
@@ -86,21 +81,16 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
       }),
     })
 
-    const tokenData = await tokenRes.json() as { access_token?: string; error?: string; error_description?: string }
-    console.error('GitHub token response:', tokenData)
+    const tokenData = await tokenRes.json() as { access_token?: string; error?: string }
     if (!tokenData.access_token) {
-      console.error('GitHub token exchange failed:', tokenData.error, tokenData.error_description)
       return Response.redirect('https://omdsh.com/?error=github_token_failed', 302)
     }
     accessToken = tokenData.access_token
   }
-  catch (err) {
-    console.error('GitHub token exchange error:', err)
-    return Response.redirect('/?error=github_token_failed', 302)
+  catch {
+    return Response.redirect('https://omdsh.com/?error=github_token_failed', 302)
   }
 
-  // Get user info
-  console.error('GitHub access_token obtained:', !!accessToken)
   let githubUser: { id: number; login: string; avatar_url: string; email: string | null }
   try {
     const userRes = await fetch('https://api.github.com/user', {
@@ -110,21 +100,15 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
         'User-Agent': 'omdsh.com/1.0',
       },
     })
-    console.error('GitHub userinfo status:', userRes.status)
     if (!userRes.ok) {
-      const bodyText = await userRes.text()
-      console.error('GitHub userinfo failed:', userRes.status, bodyText)
-      return Response.redirect(`https://omdsh.com/?error=github_userinfo_failed&detail=${userRes.status}+${encodeURIComponent(bodyText.slice(0,100))}`, 302)
+      return Response.redirect('https://omdsh.com/?error=github_userinfo_failed', 302)
     }
     githubUser = await userRes.json() as typeof githubUser
-    console.error('GitHub user:', githubUser)
   }
-  catch (err) {
-    console.error('GitHub userinfo error:', err)
+  catch {
     return Response.redirect('https://omdsh.com/?error=github_userinfo_failed', 302)
   }
 
-  // Get primary email if not public
   let email = githubUser.email
   if (!email) {
     try {
@@ -149,42 +133,114 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
   }
 
   const githubId = String(githubUser.id)
+  const githubLogin = githubUser.login
+  const githubAvatar = githubUser.avatar_url || ''
 
-  // Find user by github_id
-  let user = await first(env, 'SELECT * FROM users WHERE github_id = ?', [githubId])
-
-  if (!user) {
-    // Try to find by email and link
-    user = await first(env, 'SELECT * FROM users WHERE email = ?', [email])
-    if (user) {
-      await run(env, 'UPDATE users SET github_id = ? WHERE uid = ?', [githubId, user.uid])
-    }
-    else {
-      // Create new user
-      const uid = randomId('u')
-      const point = 100
-      const role = 'USER'
-      const now = nowIso()
-      const secretKey = randomId('')
-      const username = githubUser.login
-
-      await run(env, `
-        INSERT INTO users (uid, created_at, updated_at, username, password_hash, email, github_id, avatar_url, point, post_count, comment_count, role, level, status, secret_key)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, 1, 'NORMAL', ?)
-      `, [uid, now, now, username, 'GITHUB_OAUTH', email, githubId, githubUser.avatar_url || '', point, role, secretKey])
-
-      user = await first(env, 'SELECT * FROM users WHERE uid = ?', [uid])
-    }
+  const existingByGithub = await first(env, 'SELECT * FROM users WHERE github_id = ?', [githubId])
+  if (existingByGithub) {
+    return issueLogin(env, existingByGithub, state)
   }
 
-  if (!user) {
+  const existingByEmail = await first(env, 'SELECT * FROM users WHERE email = ?', [email])
+
+  if (existingByEmail) {
+    if (existingByEmail.password_hash === 'GOOGLE_OAUTH' || existingByEmail.password_hash === 'GITHUB_OAUTH') {
+      await run(env, 'UPDATE users SET github_id = ? WHERE uid = ?', [githubId, existingByEmail.uid])
+      return issueLogin(env, existingByEmail, state)
+    }
+
+    const linkToken = randomId('gl_')
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
+
+    await run(env,
+      'INSERT OR REPLACE INTO github_link_tokens (token, github_id, github_login, github_avatar, email, uid, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [linkToken, githubId, githubLogin, githubAvatar, email, existingByEmail.uid, expiresAt],
+    )
+
+    const returnTo = state ? (() => {
+      try {
+        const decoded = JSON.parse(base64urlDecode(state))
+        return decoded?.return || '/'
+      }
+      catch { return '/' }
+    })() : '/'
+
+    return Response.redirect(`https://omdsh.com/member/link-github?token=${linkToken}&return=${encodeURIComponent(returnTo)}`, 302)
+  }
+
+  const uid = randomId('u')
+  const point = 100
+  const role = 'USER'
+  const now = nowIso()
+  const secretKey = randomId('')
+  const username = githubLogin
+
+  await run(env, `
+    INSERT INTO users (uid, created_at, updated_at, username, password_hash, email, github_id, avatar_url, point, post_count, comment_count, role, level, status, secret_key)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0, ?, 1, 'NORMAL', ?)
+  `, [uid, now, now, username, 'GITHUB_OAUTH', email, githubId, githubAvatar, point, role, secretKey])
+
+  const newUser = await first(env, 'SELECT * FROM users WHERE uid = ?', [uid])
+  if (!newUser) {
     return Response.redirect('https://omdsh.com/?error=github_user_creation_failed', 302)
   }
 
-  // Update last login
+  return issueLogin(env, newUser, state)
+}
+
+export async function handleGitHubLinkConfirm(request: Request, env: Env): Promise<Response> {
+  const body = await request.json().catch(() => null)
+  const token = String(body?.token || '')
+  const password = String(body?.password || '')
+
+  if (!token || !password) {
+    return json({ success: false, message: '参数错误' }, new Headers(), 400)
+  }
+
+  const linkRow = await first(env, 'SELECT * FROM github_link_tokens WHERE token = ?', [token])
+  if (!linkRow) {
+    return json({ success: false, message: '链接已失效，请重新尝试 GitHub 登录' }, new Headers(), 400)
+  }
+  if (linkRow.expires_at < nowIso()) {
+    await run(env, 'DELETE FROM github_link_tokens WHERE token = ?', [token])
+    return json({ success: false, message: '链接已过期，请重新尝试 GitHub 登录' }, new Headers(), 400)
+  }
+
+  const user = await first(env, 'SELECT * FROM users WHERE uid = ?', [linkRow.uid])
+  if (!user) {
+    return json({ success: false, message: '用户不存在' }, new Headers(), 400)
+  }
+
+  const { verifyPassword } = await import('./auth')
+  const passwordOk = await verifyPassword(password, user.password_hash)
+  if (!passwordOk) {
+    return json({ success: false, message: '密码错误' }, new Headers(), 400)
+  }
+
+  await run(env, 'UPDATE users SET github_id = ?, updated_at = ? WHERE uid = ?', [linkRow.github_id, nowIso(), user.uid])
+  await run(env, 'DELETE FROM github_link_tokens WHERE token = ?', [token])
+
+  const tokenPayload = {
+    uid: user.uid,
+    userId: Number(user.id),
+    username: user.username,
+    exp: Math.floor(Date.now() / 1000) + 30 * 24 * 60 * 60,
+  }
+  const newToken = await createToken(tokenPayload, env)
+  const cookie = buildCookie(getTokenKey(env), newToken, 30 * 24 * 60 * 60 * 1000, env)
+
+  return new Response(null, {
+    status: 302,
+    headers: {
+      Location: 'https://omdsh.com/',
+      'Set-Cookie': cookie,
+    },
+  })
+}
+
+async function issueLogin(env: Env, user: any, state: string | null): Promise<Response> {
   await run(env, 'UPDATE users SET last_login = ? WHERE uid = ?', [nowIso(), user.uid])
 
-  // Issue token
   const tokenPayload = {
     uid: user.uid,
     userId: Number(user.id),
@@ -194,7 +250,6 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
   const token = await createToken(tokenPayload, env)
   const cookie = buildCookie(getTokenKey(env), token, 30 * 24 * 60 * 60 * 1000, env)
 
-  // Determine return URL from state
   let returnTo = 'https://omdsh.com/'
   if (state) {
     try {
@@ -204,7 +259,7 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
         returnTo = ret.startsWith('http') ? ret : `https://omdsh.com${ret.startsWith('/') ? ret : '/' + ret}`
       }
     }
-    catch { /* ignore invalid state */ }
+    catch { /* ignore */ }
   }
 
   return new Response(null, {

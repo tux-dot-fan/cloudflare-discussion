@@ -19,7 +19,7 @@ import { verifyTurnstile } from './turnstile'
 import { isEmailSendRateLimited, saveEmailCodeRecord, sendResendEmail, buildRegisterEmailHtml, buildResetPasswordEmailHtml } from './email'
 import { buildManageComment } from './manage'
 import { handleGoogleAuthStart, handleGoogleCallback } from './google'
-import { handleGitHubAuthStart, handleGitHubCallback } from './github'
+import { handleGitHubAuthStart, handleGitHubCallback, handleGitHubLinkConfirm } from './github'
 import { APP_VERSION } from '../../version'
 
 const PUBLIC_API_PATHS = new Set([
@@ -182,6 +182,16 @@ async function handleApi(request: Request, env: Env, url: URL, ctx: ExecutionCon
     }
     catch (err) {
       console.error('GitHub callback error:', err)
+      const h = new Headers(); h.set('Content-Type', 'application/json')
+      return json({ success: false, message: String(err) }, h, 500)
+    }
+  }
+  if (pathname === '/api/auth/github/link/confirm' && method === 'POST') {
+    try {
+      return await handleGitHubLinkConfirm(request, env)
+    }
+    catch (err) {
+      console.error('GitHub link confirm error:', err)
       const h = new Headers(); h.set('Content-Type', 'application/json')
       return json({ success: false, message: String(err) }, h, 500)
     }
