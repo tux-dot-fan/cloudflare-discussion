@@ -112,7 +112,7 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
     if (!userRes.ok) {
       const bodyText = await userRes.text()
       console.error('GitHub userinfo failed:', userRes.status, bodyText)
-      return Response.redirect('https://omdsh.com/?error=github_userinfo_failed', 302)
+      return Response.redirect(`https://omdsh.com/?error=github_userinfo_failed&detail=${userRes.status}+${encodeURIComponent(bodyText.slice(0,100))}`, 302)
     }
     githubUser = await userRes.json() as typeof githubUser
     console.error('GitHub user:', githubUser)
