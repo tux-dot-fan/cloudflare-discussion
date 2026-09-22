@@ -27,15 +27,19 @@ jobs:
           TAG=$(git describe --tags --abbrev=0 2>/dev/null | tr -d 'v')
           echo "APP_VERSION=${TAG:-1.2.0}" >> $GITHUB_ENV
 
+      - name: Inject version
+        run: node scripts/inject-version.js
+        env:
+          APP_VERSION: ${{ env.APP_VERSION }}
+
       - name: Build Nuxt
         run: npm run build
         env:
           NUXT_TELEMETRY_DISABLED: 1
-          VITE_APP_VERSION: ${{ env.APP_VERSION }}
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --name cloudflare-discussion --assets .output/public --define "APP_VERSION:\"${{ env.APP_VERSION }}\""
+          command: deploy --name cloudflare-discussion --assets .output/public
