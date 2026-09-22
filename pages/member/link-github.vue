@@ -5,6 +5,8 @@ useHead({ title: '关联 GitHub 账号' })
 
 const route = useRoute()
 const token = typeof route.query.token === 'string' ? route.query.token : ''
+const username = typeof route.query.username === 'string' ? route.query.username : ''
+const email = typeof route.query.email === 'string' ? route.query.email : ''
 const returnTo = typeof route.query.return === 'string' ? route.query.return : '/'
 
 const pending = ref(false)
@@ -20,23 +22,18 @@ async function onSubmit() {
 
   pending.value = true
   try {
-    const result = await $fetch<{ success: boolean; message?: string }>('/api/auth/github/link/confirm', {
+    // The API returns 302 with Location header on success - fetch follows redirects
+    await $fetch('/api/auth/github/link/confirm', {
       method: 'POST',
       body: { token, password },
+      credentials: 'include',
     })
-    if (result.success) {
-      toast.success('关联成功，已登录')
-      location.href = returnTo || '/'
-    }
-    else if (result.message) {
-      toast.error(result.message)
-    }
+    // If we get here without error, redirect to returnTo
+    location.href = returnTo || '/'
   }
   catch (error: any) {
     const msg = error?.data?.message || error?.message || '关联失败'
     toast.error(msg)
-  }
-  finally {
     pending.value = false
   }
 }
@@ -58,6 +55,16 @@ async function onSubmit() {
         </svg>
       </div>
 
+      <!-- Show which account is being linked -->
+      <div v-if="username || email" class="text-center">
+        <div class="font-medium text-sm">
+          正在将 GitHub 账号绑定到
+        </div>
+        <div class="font-medium text-primary mt-1">
+          {{ username }} ({{ email }})
+        </div>
+      </div>
+
       <div class="text-center text-sm text-gray-500 dark:text-gray-400">
         此邮箱已注册，请输入密码确认身份并关联 GitHub 账号
       </div>
@@ -67,7 +74,7 @@ async function onSubmit() {
           <UInput
             name="password"
             type="password"
-            placeholder="请输入您账户的密码"
+            placeholder="请输入上方账户的密码"
             autocomplete="current-password"
             autofocus
           />
@@ -86,5 +93,3 @@ async function onSubmit() {
     </div>
   </UCard>
 </template>
-
-<style scoped></style>

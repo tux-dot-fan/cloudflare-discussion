@@ -149,14 +149,6 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
       return issueLogin(env, existingByEmail, state)
     }
 
-    const linkToken = randomId('gl_')
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
-
-    await run(env,
-      'INSERT OR REPLACE INTO github_link_tokens (token, github_id, github_login, github_avatar, email, uid, expires_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
-      [linkToken, githubId, githubLogin, githubAvatar, email, existingByEmail.uid, expiresAt],
-    )
-
     const returnTo = state ? (() => {
       try {
         const decoded = JSON.parse(base64urlDecode(state))
@@ -165,7 +157,18 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
       catch { return '/' }
     })() : '/'
 
-    return Response.redirect(`https://omdsh.com/member/link-github?token=${linkToken}&return=${encodeURIComponent(returnTo)}`, 302)
+    const linkToken = randomId('gl_')
+    const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString()
+
+    await run(env,
+      'INSERT OR REPLACE INTO github_link_tokens (token, github_id, github_login, github_avatar, email, uid, expires_at, return_to) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [linkToken, githubId, githubLogin, githubAvatar, email, existingByEmail.uid, expiresAt, returnTo],
+    )
+
+    return Response.redirect(
+      `https://omdsh.com/member/link-github?token=${linkToken}&username=${encodeURIComponent(existingByEmail.username)}&email=${encodeURIComponent(email)}&return=${encodeURIComponent(returnTo)}`,
+      302,
+    )
   }
 
   const uid = randomId('u')
@@ -229,10 +232,12 @@ export async function handleGitHubLinkConfirm(request: Request, env: Env): Promi
   const newToken = await createToken(tokenPayload, env)
   const cookie = buildCookie(getTokenKey(env), newToken, 30 * 24 * 60 * 60 * 1000, env)
 
+  const returnTo = (linkRow.return_to && linkRow.return_to !== '/') ? linkRow.return_to : 'https://omdsh.com/'
+
   return new Response(null, {
     status: 302,
     headers: {
-      Location: 'https://omdsh.com/',
+      Location: returnTo,
       'Set-Cookie': cookie,
     },
   })
