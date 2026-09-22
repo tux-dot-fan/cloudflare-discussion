@@ -50,6 +50,8 @@ export const defaultSysConfig = {
   },
   googleClientId: '',
   googleClientSecret: '',
+  githubClientId: '',
+  githubClientSecret: '',
 }
 
 export function normalizeSysConfig(config: any) {
