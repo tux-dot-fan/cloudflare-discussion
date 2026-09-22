@@ -23,13 +23,13 @@ jobs:
         run: npm ci
 
       - name: Get version from git tag
-        run: echo "APP_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo '1.2.0')" >> $GITHUB_ENV
+        run: echo "VITE_APP_VERSION=$(git describe --tags --abbrev=0 2>/dev/null || echo '1.2.0')" >> $GITHUB_ENV
 
       - name: Build Nuxt
         run: npm run build
         env:
           NUXT_TELEMETRY_DISABLED: 1
-          APP_VERSION: ${{ env.APP_VERSION }}
+          VITE_APP_VERSION: ${{ env.VITE_APP_VERSION }}
 
       - name: Deploy to Cloudflare Workers
         uses: cloudflare/wrangler-action@v3
@@ -39,4 +39,4 @@ jobs:
           # wrangler.jsonc 里 main: worker/src/index.ts 会自动打包 Worker 代码
           # --assets 会把 .output/public 作为静态文件一起部署
           # 两者结合：Worker 代码 + Nuxt 静态资源一起打包进同一个 Worker
-          command: deploy --name cloudflare-discussion --assets .output/public
+          command: deploy --name cloudflare-discussion --assets .output/public --define "__APP_VERSION__=${{ env.VITE_APP_VERSION }}"
