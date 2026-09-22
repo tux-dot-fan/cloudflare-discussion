@@ -48,6 +48,8 @@ export const defaultSysConfig = {
     imgStrategy: 'r2',
     attachmentStrategy: 'r2',
   },
+  googleClientId: '',
+  googleClientSecret: '',
 }
 
 export function normalizeSysConfig(config: any) {

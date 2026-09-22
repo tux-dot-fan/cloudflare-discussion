@@ -18,6 +18,7 @@ import { handleTelegramWebhook } from './telegram'
 import { verifyTurnstile } from './turnstile'
 import { isEmailSendRateLimited, saveEmailCodeRecord, sendResendEmail, buildRegisterEmailHtml, buildResetPasswordEmailHtml } from './email'
 import { buildManageComment } from './manage'
+import { handleGoogleAuthStart, handleGoogleCallback } from './google'
 import { APP_VERSION } from '../../version'
 
 const PUBLIC_API_PATHS = new Set([
@@ -139,6 +140,28 @@ async function handleApi(request: Request, env: Env, url: URL, ctx: ExecutionCon
     }
 
     return handleSignIn(env, currentUser)
+  }
+
+  // Google OAuth
+  if (pathname === '/api/auth/google' && method === 'GET') {
+    try {
+      return await handleGoogleAuthStart(request, env)
+    }
+    catch (err) {
+      console.error('Google auth start error:', err)
+      const h = new Headers(); h.set('Content-Type', 'application/json')
+      return json({ success: false, message: String(err) }, h, 500)
+    }
+  }
+  if (pathname === '/api/auth/google/callback' && method === 'GET') {
+    try {
+      return await handleGoogleCallback(request, env)
+    }
+    catch (err) {
+      console.error('Google callback error:', err)
+      const h = new Headers(); h.set('Content-Type', 'application/json')
+      return json({ success: false, message: String(err) }, h, 500)
+    }
   }
 
   if (pathname === '/api/member/saveSettings' && method === 'POST') {

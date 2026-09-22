@@ -15,7 +15,7 @@
       "binding": "DB",
       "database_name": "bbs",
       // 本地预览可先用占位 UUID，远端部署前替换成 wrangler d1 create 返回的真实 database_id
-      "database_id": "8cfdeb20-c0b5-448e-b228-ff2cf5ffbb69",
+      "database_id": "38fcd837-dfb7-4fe6-b82b-31273aaf8841",
       "migrations_dir": "worker/migrations"
     }
   ],
