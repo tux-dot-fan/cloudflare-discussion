@@ -47,10 +47,12 @@ export async function handleGitHubAuthStart(request: Request, env: Env): Promise
 }
 
 export async function handleGitHubCallback(request: Request, env: Env): Promise<Response> {
+  console.error('GitHub callback URL:', request.url)
   const url = new URL(request.url)
   const code = url.searchParams.get('code')
   const state = url.searchParams.get('state')
   const error = url.searchParams.get('error')
+  console.error('GitHub callback code=', !!code, 'error=', error)
 
   if (error) {
     return Response.redirect('https://omdsh.com/?error=github_denied', 302)
@@ -83,9 +85,10 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
       }),
     })
 
-    const tokenData = await tokenRes.json() as { access_token?: string; error?: string }
+    const tokenData = await tokenRes.json() as { access_token?: string; error?: string; error_description?: string }
+    console.error('GitHub token response:', tokenData)
     if (!tokenData.access_token) {
-      console.error('GitHub token exchange failed:', tokenData)
+      console.error('GitHub token exchange failed:', tokenData.error, tokenData.error_description)
       return Response.redirect('https://omdsh.com/?error=github_token_failed', 302)
     }
     accessToken = tokenData.access_token
@@ -96,6 +99,7 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
   }
 
   // Get user info
+  console.error('GitHub access_token obtained:', !!accessToken)
   let githubUser: { id: number; login: string; avatar_url: string; email: string | null }
   try {
     const userRes = await fetch('https://api.github.com/user', {
@@ -104,12 +108,14 @@ export async function handleGitHubCallback(request: Request, env: Env): Promise<
         Accept: 'application/vnd.github+json',
       },
     })
+    console.error('GitHub userinfo status:', userRes.status)
     if (!userRes.ok) {
       const bodyText = await userRes.text()
       console.error('GitHub userinfo failed:', userRes.status, bodyText)
       return Response.redirect('https://omdsh.com/?error=github_userinfo_failed', 302)
     }
     githubUser = await userRes.json() as typeof githubUser
+    console.error('GitHub user:', githubUser)
   }
   catch (err) {
     console.error('GitHub userinfo error:', err)
