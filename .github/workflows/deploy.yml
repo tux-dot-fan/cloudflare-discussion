@@ -28,7 +28,7 @@ jobs:
           echo "APP_VERSION=${TAG:-1.2.0}" >> $GITHUB_ENV
 
       - name: Inject version
-        run: node scripts/inject-version.js
+        run: node scripts/inject-version.mjs
         env:
           APP_VERSION: ${{ env.APP_VERSION }}
 
