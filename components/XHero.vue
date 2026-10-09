@@ -13,6 +13,18 @@
         DSH 是一个开源的 AI Agent 框架，让大模型真正替你完成复杂任务——不只是聊天，而是自主规划、执行和检查结果。
       </p>
 
+      <div class="hero-highlight">
+        <span class="hero-highlight-icon">⭐</span>
+        <div class="hero-highlight-text">
+          <strong>重点关注：oh-my-dsh</strong>
+          <span>
+            530 个 DSH 插件生态，TypeScript 类型检查 0 错误、3731 个测试全绿、2183 个端到端注册检查通过。
+            严格追踪每个实现 gap 来源，质量在 DSH 生态里独一档。
+            <a href="https://github.com/LaplaceYoung/oh-my-dsh" target="_blank" rel="noopener">GitHub →</a>
+          </span>
+        </div>
+      </div>
+
       <div class="hero-install">
         <h2 class="hero-install-title">🚀 快速安装</h2>
         <div class="hero-install-code">
@@ -183,6 +195,50 @@ async function copyInstall() {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+}
+
+.hero-highlight {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.hero-highlight-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+.hero-highlight-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.hero-highlight-text strong {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fbbf24;
+}
+
+.hero-highlight-text span {
+  font-size: 0.8125rem;
+  color: #94a3b8;
+  line-height: 1.6;
+}
+
+.hero-highlight-text a {
+  color: #4fc9c5;
+  text-decoration: none;
+}
+
+.hero-highlight-text a:hover {
+  text-decoration: underline;
 }
 
 .hero-feature {
