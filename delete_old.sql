@@ -1,0 +1,5 @@
+DELETE FROM posts WHERE pid='p003';
+DELETE FROM posts WHERE pid='p006';
+DELETE FROM posts WHERE pid='p007';
+DELETE FROM posts WHERE pid='p009';
+DELETE FROM posts WHERE pid='p2b22767186c6405d98f432';

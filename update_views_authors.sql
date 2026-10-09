@@ -1,0 +1,12 @@
+UPDATE posts SET uid='u81844e040cca4882ab0df6', view_count=1523 WHERE pid='pff537394923549cd85674f';
+UPDATE posts SET uid='u63bbf4ac78ac498d8b7c77', view_count=876 WHERE pid='pdd175bd11d414380bec186';
+UPDATE posts SET uid='u7e74b88084d5448787bf18', view_count=2341 WHERE pid='p9bc7e6c39ba74fd79e2385';
+UPDATE posts SET uid='u81844e040cca4882ab0df6', view_count=567 WHERE pid='p8cd82466438148a78ca980';
+UPDATE posts SET uid='u63bbf4ac78ac498d8b7c77', view_count=1892 WHERE pid='p55b45f5a3988455b905673';
+UPDATE posts SET uid='u7e74b88084d5448787bf18', view_count=743 WHERE pid='p08cf4f1e71984ca489f550';
+UPDATE posts SET uid='u81844e040cca4882ab0df6', view_count=1205 WHERE pid='pe0719450bd25411597b8b5';
+UPDATE posts SET uid='u63bbf4ac78ac498d8b7c77', view_count=456 WHERE pid='pe2d7185cc7024a009d0c3c';
+UPDATE posts SET uid='u7e74b88084d5448787bf18', view_count=3102 WHERE pid='pcdf96838a36b4a0ea103a5';
+UPDATE posts SET uid='u81844e040cca4882ab0df6', view_count=678 WHERE pid='p45b192369d40455da5e4a8';
+UPDATE posts SET uid='u63bbf4ac78ac498d8b7c77', view_count=934 WHERE pid='p79baddb4b88a48cfa44545';
+UPDATE posts SET uid='u7e74b88084d5448787bf18', view_count=1887 WHERE pid='p7eff4845b7dd4a1ba950ed';

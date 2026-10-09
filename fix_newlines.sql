@@ -1,0 +1,25 @@
+-- Fix all 12 posts: replace literal \n with actual newline
+UPDATE posts SET content = REPLACE(content, '
+', CHAR(10)) WHERE pid = 'p001';
+UPDATE posts SET content = REPLACE(content, '
+', CHAR(10)) WHERE pid = 'p002';
+UPDATE posts SET content = REPLACE(content, '
+', CHAR(10)) WHERE pid = 'p003';
+UPDATE posts SET content = REPLACE(content, '
+', CHAR(10)) WHERE pid = 'p004';
+UPDATE posts SET content = REPLACE(content, '
+', CHAR(10)) WHERE pid = 'p005';
+UPDATE posts SET content = REPLACE(content, '
+', CHAR(10)) WHERE pid = 'p006';
+UPDATE posts SET content = REPLACE(content, '
+', CHAR(10)) WHERE pid = 'p007';
+UPDATE posts SET content = REPLACE(content, '
+', CHAR(10)) WHERE pid = 'p008';
+UPDATE posts SET content = REPLACE(content, '
+', CHAR(10)) WHERE pid = 'p009';
+UPDATE posts SET content = REPLACE(content, '
+', CHAR(10)) WHERE pid = 'p010';
+UPDATE posts SET content = REPLACE(content, '
+', CHAR(10)) WHERE pid = 'p011';
+UPDATE posts SET content = REPLACE(content, '
+', CHAR(10)) WHERE pid = 'p012';

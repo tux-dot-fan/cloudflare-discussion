@@ -80,6 +80,7 @@ useHead({
 </script>
 
 <template>
+  <XHero />
   <UCard class="h-full overflow-y-auto mt-0 md:mt-2 w-full min-h-60" :ui="{ rounded: 'rounded-none md:rounded-lg', body: { padding: 'px-0 sm:p-0' }, header: { padding: ' py-2 sm:px-4 px-2' } }">
     <template #header>
       <XTagList />
