@@ -84,7 +84,7 @@ async function copyInstall() {
 .hero-section {
   background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
   border-bottom: 1px solid rgba(255,255,255,0.08);
-  padding: 2.5rem 1.5rem 2rem;
+  padding: 1.75rem 1.5rem 1.5rem;
   margin-bottom: 0;
 }
 

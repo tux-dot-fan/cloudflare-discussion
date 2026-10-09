@@ -218,7 +218,7 @@ function GoogleSearch() {
       v-if="sysconfig.webBgimage" :style="{ backgroundImage: `url(${sysconfig.webBgimage})` }"
       class="hidden md:block fixed w-screen h-screen bg-cover bg-no-repeat bg-[100%] z-0"
     />
-    <div class="main flex max-w-[1080px] mx-auto h-full gap-4 relative">
+    <div class="main flex max-w-[1080px] mx-auto gap-4 relative">
       <div class="flex-1 w-full">
         <slot />
       </div>
